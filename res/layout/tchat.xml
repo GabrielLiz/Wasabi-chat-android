@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+  xmlns:android="http://schemas.android.com/apk/res/android"
+  android:layout_width="match_parent"
+  android:layout_height="match_parent"
+  android:orientation="vertical">
+  
+  
+  <TextView 
+    	android:id="@+id/clientNameLbl" 
+    	android:text=""
+    	android:textSize="40px"
+    	android:textColor ="#FFFFFF"
+    	android:layout_width="wrap_content" 
+    	android:layout_height="wrap_content">
+    	</TextView>
+  
+  <ScrollView
+  	xmlns:android="http://schemas.android.com/apk/res/android"
+  	android:id="@+id/scrollView"
+  	android:layout_width="fill_parent"
+  	android:layout_height="wrap_content"> 	
+  	<TextView
+  		android:id="@+id/tchatLbl" 
+    	android:text=""
+    	android:textSize="20px"
+    	android:textColor ="#FFFFFF"
+    	android:layout_width="wrap_content" 
+    	android:layout_height="wrap_content">
+  		</TextView>
+  	  	
+  	</ScrollView>
+  
+  <LinearLayout
+  	 android:id="@+id/tchatLayout"
+	 android:layout_width="wrap_content" 
+	 android:layout_height="wrap_content"
+	 android:layout_marginTop="500px" 
+	 android:baselineAligned="true"
+	 android:orientation="horizontal"> 	
+		<EditText android:id ="@+id/tchatText"
+	     	android:layout_width="350px"
+	     	android:layout_height="wrap_content"> 	
+		</EditText>
+		<Button android:id ="@+id/sendBtn"
+	  		android:text="Send"
+	  		android:layout_width="100px"
+	  		android:layout_height="70px"
+	  		android:onClick="sendMsg">
+  		</Button>
+	</LinearLayout>
+		
+</LinearLayout>
