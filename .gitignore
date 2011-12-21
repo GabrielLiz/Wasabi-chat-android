@@ -22,6 +22,7 @@
 
 # Logs and databases #
 ######################
+.metadata
 *.log
 *.sql
 *.sqlite
@@ -30,5 +31,4 @@
 ######################
 .DS_Store*
 ehthumbs.db
-Icon?
 Thumbs.db
