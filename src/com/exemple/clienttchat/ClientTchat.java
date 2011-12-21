@@ -6,8 +6,10 @@ import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.EditText;
+import android.widget.FrameLayout;
 import android.widget.LinearLayout;
 import android.widget.ListView;
+import android.widget.RelativeLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
 
@@ -63,8 +65,9 @@ public class ClientTchat extends Activity {
     	setContentView(R.layout.tchat);
     	TextView clientNameLbl = (TextView)findViewById(R.id.clientNameLbl);
     	clientNameLbl.setText(clientName);
-    	LinearLayout tchatLay = (LinearLayout)findViewById(R.id.tchatLayout);
+    	RelativeLayout tchatLay = (RelativeLayout)findViewById(R.id.tchatLayout);
     	tchatLay.bringToFront();
+
     }
     
     /**

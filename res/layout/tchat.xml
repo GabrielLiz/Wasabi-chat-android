@@ -31,7 +31,7 @@
   	  	
   	</ScrollView>
   
-  <LinearLayout
+  <RelativeLayout
   	 android:id="@+id/tchatLayout"
 	 android:layout_width="wrap_content" 
 	 android:layout_height="wrap_content"
@@ -44,10 +44,11 @@
 		</EditText>
 		<Button android:id ="@+id/sendBtn"
 	  		android:text="Send"
+	  		android:layout_alignParentBottom="true"
 	  		android:layout_width="100px"
 	  		android:layout_height="70px"
 	  		android:onClick="sendMsg">
   		</Button>
-	</LinearLayout>
+	</RelativeLayout>
 		
 </LinearLayout>
