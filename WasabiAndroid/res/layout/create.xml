@@ -21,7 +21,8 @@
 			android:layout_height="wrap_content"
 			android:paddingLeft="20px">
 		</TextView> 	
-		<EditText android:id ="@+id/loginText"
+		<EditText
+		    android:id ="@+id/loginText"
 	     	android:layout_width="300px"
 	     	android:layout_height="wrap_content"
 	     	android:layout_marginLeft="55px"
