@@ -1,5 +1,13 @@
 package com.exemple.clientchat;
 
+import DataTransport.*;
+
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.net.InetAddress;
+import java.net.Socket;
+import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.HashMap;
 
@@ -7,6 +15,7 @@ import com.exemple.clientchat.R;
 
 import android.app.Activity;
 import android.os.Bundle;
+import android.view.KeyEvent;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
@@ -19,23 +28,38 @@ import android.widget.TextView;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.view.LayoutInflater;
+import android.widget.Toast;
 
 public class ClientTchat extends Activity {
-	
-	
-    /** Called when the activity is first created. */
+
+	InetAddress address = null;
+	private static Socket s_active, s_passive;		// Socket client
+	private static ObjectInputStream ois_active;	// Flux d'entré du socket
+	private static ObjectOutputStream oos_active;	// Flux de sortie du socket
+	private static ObjectInputStream ois_passive;	// Flux d'entré du socket (passif = réception de donnée)
+	private static ObjectOutputStream oos_passive;	// Flux de sortie du socket (passif = réception de donnée)
+
+	/** Called when the activity is first created. */
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.main);
+        connectToServer();
+    }
+    
+    /**
+     * Back button listener
+     */
+    @Override
+    public void onBackPressed (){
+    	//TODO: implement back button press to return to last layout
     }
     
     /**
      * create user menu
      */
     public void createMenu(View btn){
-    	setContentView(R.layout.create);
-    	
+    	setContentView(R.layout.create);    	
     }
     
     public void authentification(View btn){
@@ -47,41 +71,195 @@ public class ClientTchat extends Activity {
     	String pass    = editPass.getText().toString();
     	String confirm = editConfirm.getText().toString();
     	
-    	//TODO Envoyer au serveur pour vérification
-    	// A revoir car lorsque les 2 mdp sont correct
-    	//ca passe  quand meme dans le if et non dans le else.
-    	if(pass!=confirm){
-    	
-	    	//On instancie notre layout en tant que View
-	        LayoutInflater factory = LayoutInflater.from(this);
-	        final View alertDialogView = factory.inflate(R.layout.error_create, null);
-	 
-	        //Création de l'AlertDialog
-	        AlertDialog.Builder adb = new AlertDialog.Builder(this);
-	 
-	        //On affecte la vue personnalisé que l'on a crée à notre AlertDialog
-	        adb.setView(alertDialogView);
-	 
-	        //On donne un titre à l'AlertDialog
-	        adb.setTitle("Attention");
-	 
-	        //On modifie l'icône de l'AlertDialog pour le fun ;)
-	        adb.setIcon(android.R.drawable.ic_dialog_alert);
-	 
-	        //On affecte un bouton "OK" à notre AlertDialog et on lui affecte un évènement
-	        adb.setPositiveButton("OK", new DialogInterface.OnClickListener() {
-	            public void onClick(DialogInterface dialog, int which) {
-	            	setContentView(R.layout.create);
-	            	
-	          } });
-	 
-	        adb.show();
+    	//Si les champs sont pas tous remplis = erreur
+    	if(login.compareTo("")==0 && pass.compareTo("")==0 && confirm.compareTo("")==0){
+    		printToast("Error : fill this correctly!");
     	}
+    	//Si les 2 mdp sont pas les mêmes
+    	else if(pass.compareTo(confirm)!=0){
+    		printToast("Error : pwd and confirm are not the same!");
+    	}
+    	//Si tout est en ordre essaie de s'enregistrer sur le serveur
     	else{
-    		setContentView (R.layout.list);
+    		
+    		if(registerToServer(login, pass))
+    			setContentView(R.layout.main);	
     	}
     }
     
+    /**
+     * print toast
+     */
+    public void printToast(String msg){
+    	Toast toast;
+    	toast = Toast.makeText(getApplicationContext(), msg, Toast.LENGTH_SHORT);
+    	toast.show();
+    }
+    
+    /**
+     * connect to server
+     */
+    public int connectToServer(){
+    	
+		// On commence par chercher l'adresse du serveur
+		try {
+			address = InetAddress.getByName("www.mubedded.com");
+		} catch (UnknownHostException e) {
+			printToast("Error : server unreachable!");
+			return -1;
+		}
+		
+		// On tente de se connecter au serveur
+		try {
+			s_active = new Socket(address, 3000);
+		} catch (IOException e) {
+			printToast("Error : active socket creation failed!");
+			return -1;
+		}
+		
+		// On crée le flux sortant !!!OBLIGATOIRE de créer le flux sortant avant le flux entrant!!!
+		try {
+			oos_active = new ObjectOutputStream(s_active.getOutputStream());
+		} catch (IOException e) {
+			printToast("Error : active OOS creation failed!");
+			return -1;
+		}
+		// On crée le flux entrant
+		try {
+			ois_active = new ObjectInputStream(s_active.getInputStream());
+		} catch (Exception e) {
+			printToast("Error : active OIS creation failed!");
+			return -1;
+		}
+    	
+		return 0;
+    }//connectToServer
+    
+    /**
+     * try to register the new user to the server
+     */
+    public boolean registerToServer(String login, String password){
+    	
+		// On crée un objet container pour contenir nos donnée
+		// On y ajoute un AdminStream de type Registration avec comme params le login et le mot de pass
+    	Container container = new Container(new Registration(login, password), login);
+		try {
+			// On tente d'envoyer les données
+			oos_active.writeObject(container);
+			// On tente de recevoir les données
+			Status status = (Status)ois_active.readObject();
+
+			// On switch sur le type de retour que nous renvoie le serveur
+			// !!!Le type enum "Value" est sujet à modification et va grandir en fonction de l'avance du projet!!!
+			switch(status.getValue()){
+			case OK:
+				printToast("Account registration succeed!");
+				return true;
+			case CONTACT_ALREADY_EXISTS:
+				printToast("Error : User already exist!");
+				return false;
+			case CONTACT_CREATION_FAILED:
+				printToast("Error : User creation failed!");
+				return false;
+			default:
+				printToast("Error : Unknown error!");
+				return false;
+			}
+		} catch (Exception e) {
+			printToast("Error : communication error!");
+			return false;
+		}
+    }//registerToServer()
+    
+    /**
+     * Auth to server
+     */
+    public boolean authToServer(String login, String password){
+
+		// On crée un objet container pour contenir nos donnée
+		// On y ajoute un AdminStream de type Authentification avec comme params le login et le mot de pass
+		Container container = new Container(new Authentification(login, password), login);
+		
+		//Auth sur le port actif
+		try {
+			// On tente d'envoyer les données
+			oos_active.writeObject(container);
+			// On tente de recevoir les données
+			Status status = (Status)ois_active.readObject();
+
+			// On switch sur le type de retour que nous renvoie le serveur
+			// !!!Le type enum "Value" est sujet à modification et va grandir en fonction de l'avance du projet!!!
+			switch(status.getValue()){
+			case CONTACT_AUTHENTIFICATION_SUCCESS:
+
+				//creation du socket
+				try {
+					s_passive = new Socket(address, 3001);
+				} catch (IOException e) {
+					printToast("Error : passive socket creation failed!");
+					return false;
+				}
+				
+				// On crée le flux sortant !!!OBLIGATOIRE de créer le flux sortant avant le flux entrant!!!
+				try {
+					oos_passive = new ObjectOutputStream(s_passive.getOutputStream());
+				} catch (IOException e) {
+					printToast("Error : passive OOS creation failed!");
+					return false;
+				}
+				// On crée le flux entrant
+				try {
+					ois_passive = new ObjectInputStream(s_passive.getInputStream());
+				} catch (Exception e) {
+					printToast("Error : passive OIS creation failed!");
+					return false;
+				}
+				
+				container = new Container(new Authentification(login, password), login);
+				
+				//Auth sur le port passif
+				try {
+					// On tente d'envoyer les données
+					oos_passive.writeObject(container);
+					// On tente de recevoir les données
+					status = (Status)ois_passive.readObject();
+
+					// On switch sur le type de retour que nous renvoie le serveur
+					// !!!Le type enum "Value" est sujet à modification et va grandir en fonction de l'avance du projet!!!
+					switch(status.getValue()){
+					case CONTACT_AUTHENTIFICATION_SUCCESS:
+						break;
+					case CONTACT_AUTHENTIFICATION_FAILED:
+						printToast("Error : login failed on passive socket!");
+						return false;
+					default:
+						printToast("Error : unknown error!");
+						return false;
+					}
+				} catch(Exception e){
+					e.printStackTrace();
+					printToast("Error : communication error!");
+					return false;
+				}
+			break;
+			
+			case CONTACT_AUTHENTIFICATION_FAILED:
+				printToast("Error : login failed on active socket!");
+				return false;
+				
+			default:
+				printToast("Error : unknown error!");
+				return false;
+			}
+		} catch (Exception e) {
+			printToast("Error : communication error!");
+			return false;
+		}
+		
+		printToast("Login succeed!");
+		
+		return true;
+    }
     /**
      * authenticate user menu
      * @param btn
@@ -95,17 +273,26 @@ public class ClientTchat extends Activity {
      * @param btn
      */
     public void getClientList (View btn){
-    	setContentView (R.layout.list);
-    	String [] clientList = new String[]{"alain", "toto", "tom", "jack"};
-    	final ListView list = (ListView)findViewById(R.id.clientList);
-    	list.setAdapter(new ArrayAdapter<String>(this,
-				android.R.layout.simple_list_item_1, clientList));  
     	
-    	list.setOnItemClickListener(new ListView.OnItemClickListener() {
-			public void onItemClick(AdapterView<?> a, View v, int pos, long l) {
-				tchatMenu(list.getItemAtPosition(pos).toString());
-			}
-		});
+    	EditText editLogin = (EditText)findViewById(R.id.loginText);
+    	EditText editPassword = (EditText)findViewById(R.id.passText);
+   
+    	String login   = editLogin.getText().toString();
+    	String password    = editPassword.getText().toString();
+    	
+    	if(authToServer(login,password)){
+	    	setContentView (R.layout.list);
+	    	String [] clientList = new String[]{"alain", "toto", "tom", "jack"};
+	    	final ListView list = (ListView)findViewById(R.id.clientList);
+	    	list.setAdapter(new ArrayAdapter<String>(this,
+					android.R.layout.simple_list_item_1, clientList));  
+	    	
+	    	list.setOnItemClickListener(new ListView.OnItemClickListener() {
+				public void onItemClick(AdapterView<?> a, View v, int pos, long l) {
+					tchatMenu(list.getItemAtPosition(pos).toString());
+				}
+			});
+    	}
     	
     }
     

@@ -13,8 +13,13 @@ public class Status extends AdminStream {
 
 	public enum Value implements Serializable{
 		OK,
+		ERROR,
+		CONTACT_FOUND,
+		CONTACT_NOT_FOUND,
 		CONTACT_ALREADY_EXISTS,
-		CONTACT_CREATION_FAILED
+		CONTACT_CREATION_FAILED,
+		CONTACT_AUTHENTIFICATION_SUCCESS,
+		CONTACT_AUTHENTIFICATION_FAILED
 	}
 	/**
 	 * 
