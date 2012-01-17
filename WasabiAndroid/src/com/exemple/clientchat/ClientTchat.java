@@ -39,27 +39,41 @@ public class ClientTchat extends Activity {
 	private static ObjectInputStream ois_passive;	// Flux d'entré du socket (passif = réception de donnée)
 	private static ObjectOutputStream oos_passive;	// Flux de sortie du socket (passif = réception de donnée)
 
+	
+	/**
+	 * used to know the current layout and to switch between the current layout
+	 * and the precedent one
+	 */
+	enum ListLayout {
+		MainLayout, CreateUserLayout, ConnectUserLayout, ListContactLayout, 
+		TchatLayout	};
+	
+	ListLayout currentLayout; 
+    
+    /**
+	 * when destroying the activity
+	 */
+	@Override
+	public void onDestroy() {
+		super.onDestroy();
+		this.finish();
+	}
+	
 	/** Called when the activity is first created. */
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.main);
+        currentLayout = ListLayout.MainLayout;
         connectToServer();
     }
-    
-    /**
-     * Back button listener
-     */
-    @Override
-    public void onBackPressed (){
-    	//TODO: implement back button press to return to last layout
-    }
-    
+   
     /**
      * create user menu
      */
     public void createMenu(View btn){
-    	setContentView(R.layout.create);    	
+    	setContentView(R.layout.create);   
+    	currentLayout = ListLayout.CreateUserLayout; 
     }
     
     public void authentification(View btn){
@@ -72,12 +86,12 @@ public class ClientTchat extends Activity {
     	String confirm = editConfirm.getText().toString();
     	
     	//Si les champs sont pas tous remplis = erreur
-    	if(login.compareTo("")==0 && pass.compareTo("")==0 && confirm.compareTo("")==0){
-    		printToast("Error : fill this correctly!");
+    	if(login.compareTo("")==0 || pass.compareTo("")==0 || confirm.compareTo("")==0){
+    		printToast("Error : fully fill this please!");
     	}
     	//Si les 2 mdp sont pas les mêmes
     	else if(pass.compareTo(confirm)!=0){
-    		printToast("Error : pwd and confirm are not the same!");
+    		printToast("Error : pwd and confirm must be the same!");
     	}
     	//Si tout est en ordre essaie de s'enregistrer sur le serveur
     	else{
@@ -266,6 +280,7 @@ public class ClientTchat extends Activity {
      */
     public void loginMenu(View btn) {
     	setContentView(R.layout.authent);
+    	currentLayout = ListLayout.ConnectUserLayout; 
     }
     
     /**
@@ -281,6 +296,7 @@ public class ClientTchat extends Activity {
     	String password    = editPassword.getText().toString();
     	
     	if(authToServer(login,password)){
+    		currentLayout = ListLayout.ListContactLayout; 
 	    	setContentView (R.layout.list);
 	    	String [] clientList = new String[]{"alain", "toto", "tom", "jack"};
 	    	final ListView list = (ListView)findViewById(R.id.clientList);
@@ -302,6 +318,7 @@ public class ClientTchat extends Activity {
      */
     public void tchatMenu (String clientName){
     	setContentView(R.layout.tchat);
+    	currentLayout = ListLayout.TchatLayout; 
     	TextView clientNameLbl = (TextView)findViewById(R.id.clientNameLbl);
     	clientNameLbl.setText(clientName);
     }
@@ -311,7 +328,6 @@ public class ClientTchat extends Activity {
      * @param btn
      */
     public void sendMsg(View btn){
-    	//setContentView(R.layout.tchat);
     	EditText edit = (EditText)findViewById(R.id.tchatText);
     	ScrollView scroll = (ScrollView)findViewById(R.id.scrollView);
     	TextView messageTxt = (TextView)findViewById(R.id.tchatLbl);
@@ -415,4 +431,70 @@ public class ClientTchat extends Activity {
         	}
          });
     }
+    
+    @Override
+	public boolean onKeyDown(int keyCode, KeyEvent event) {
+		if (keyCode == KeyEvent.KEYCODE_BACK) {
+			changeLayout();
+			return true;
+		}
+		return super.onKeyDown(keyCode, event);
+	}
+    
+    /**
+	 * to update the new layout to show 
+	 */
+	public void changeLayout() {
+
+		switch (currentLayout) {
+			case MainLayout: {
+				showAlert("Quit Wasabi, Are you sure?", currentLayout);
+				break;
+			}
+			case ConnectUserLayout:
+			case CreateUserLayout: {
+				setContentView(R.layout.main);
+				currentLayout = ListLayout.MainLayout;
+				break;
+			}
+			case ListContactLayout: {
+				showAlert("Disconnect user?", currentLayout);
+				break;
+			}
+			case TchatLayout: {
+				setContentView(R.layout.list);
+				currentLayout = ListLayout.ListContactLayout;
+				break;
+			}
+		}
+	}
+	
+	/**
+	 * to show message alert 
+	 * @param msg
+	 */
+	public void showAlert(String msg, final ListLayout layout) {
+		new AlertDialog.Builder(this).setTitle("Attention!").setMessage(msg)
+				.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+					//@Override
+					public void onClick(DialogInterface dialog, int which) {
+						switch (layout) {
+						case MainLayout: {
+							onDestroy();
+							break;
+						}
+						
+						case ListContactLayout: {
+							setContentView(R.layout.main);
+							currentLayout = ListLayout.MainLayout;
+							break;
+						}
+						default: {
+							break;
+						}
+						}
+					}
+				}).show();
+	}
+
 }
