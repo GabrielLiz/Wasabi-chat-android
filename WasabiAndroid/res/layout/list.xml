@@ -1,23 +1,51 @@
 <?xml version="1.0" encoding="utf-8"?>
+	
 <LinearLayout
-  xmlns:android="http://schemas.android.com/apk/res/android"
-  android:layout_width="fill_parent"
-  android:layout_height="fill_parent"
-  android:orientation="vertical">
-  
-   <TextView 
-    	android:id="@+id/restoreDateText" 
-    	android:text="Contacts"
-    	android:textSize="40px"
-    	android:textColor ="#FFFFFF"
-    	android:layout_width="wrap_content" 
-    	android:layout_height="wrap_content">
-    	</TextView>
-    
-    <ListView
-    	android:id="@+id/clientList"
-    	android:layout_width="fill_parent"
-    	android:layout_height="fill_parent"
-    	android:drawSelectorOnTop="false"/>
-    	  
-</LinearLayout>
+	xmlns:android="http://schemas.android.com/apk/res/android"
+	android:layout_width="fill_parent"
+	android:layout_height="fill_parent"
+	android:orientation="vertical">
+   
+	<LinearLayout
+		android:layout_width="fill_parent"
+		android:layout_height="wrap_content"
+		android:orientation="vertical">
+		
+    	<Button android:id ="@+id/AddContact"
+			android:text="Add new contact"
+			android:layout_width="fill_parent"
+			android:layout_height="wrap_content"
+			android:onClick="ViewAddContact">
+		</Button>
+		
+		<Button android:id ="@+id/RequestContact"
+			android:text="Manage request"
+			android:layout_width="fill_parent"
+			android:layout_height="wrap_content"
+			android:onClick="ViewRequest">
+		</Button>
+		
+	</LinearLayout>
+	
+	<LinearLayout
+		android:layout_width="fill_parent"
+		android:layout_height="wrap_content"
+		android:orientation="vertical">
+
+		<TextView 
+		 	android:id="@+id/restoreDateText" 
+		 	android:text="Contacts"
+		 	android:textSize="40px"
+		 	android:textColor ="#FFFFFF"
+		 	android:layout_width="wrap_content" 
+		 	android:layout_height="wrap_content">
+		 </TextView>
+	 
+		 <ListView
+		 	android:id="@+id/clientList"
+		 	android:layout_width="fill_parent"
+		 	android:layout_height="fill_parent"
+		 	android:drawSelectorOnTop="false"/>
+		 
+	</LinearLayout>	 
+</LinearLayout> 
