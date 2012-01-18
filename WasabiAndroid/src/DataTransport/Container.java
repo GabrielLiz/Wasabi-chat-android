@@ -21,7 +21,6 @@ public class Container implements Serializable {
 	/**
 	 * 
 	 */
-	
 	public Container(Stream stream, String login) {
 		this.stream = stream;
 		this.login = login;

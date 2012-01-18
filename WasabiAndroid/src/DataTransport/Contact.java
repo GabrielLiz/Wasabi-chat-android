@@ -3,11 +3,18 @@
  */
 package DataTransport;
 
+import DataModel.ModelContact;
+
 /**
  * @author Yannick Lanz
  *
  */
 public class Contact extends AdminStream {
+
+	public Contact(ModelContact contact) {
+		super(contact);
+		// TODO Auto-generated constructor stub
+	}
 
 	/**
 	 * 
@@ -17,8 +24,8 @@ public class Contact extends AdminStream {
 	/**
 	 * 
 	 */
-	public Contact() {
+	/*public Contact() {
 		// TODO Auto-generated constructor stub
-	}
+	}*/
 
 }

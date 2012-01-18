@@ -81,6 +81,6 @@
   		android:layout_height="70px"
   		android:layout_marginTop="200px"
   		android:layout_gravity="center_horizontal"
-  		android:onClick="authentification">
+  		android:onClick="createUser">
   	</Button>
 </LinearLayout>
