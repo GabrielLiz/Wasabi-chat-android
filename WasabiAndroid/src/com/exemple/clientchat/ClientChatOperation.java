@@ -39,7 +39,7 @@ public class ClientChatOperation{
 	public ClientChatOperation (String login, String pass){
 		this.login = login;
 		this.pass= pass;
-		contacts = new ContactListResponse(new ModelContact(clientId,login,pass));
+		contacts = new ContactListResponse();
 	}
 	
 	/**
@@ -126,7 +126,7 @@ public class ClientChatOperation{
 
 		// On crée un objet container pour contenir nos donnée
 		// On y ajoute un AdminStream de type Authentification avec comme params le login et le mot de pass
-    	Container container = new Container(new Authentification(new ModelContact(-1,login, pass),pass), 
+    	Container container = new Container(new Authentification(login, pass), 
     											login);
 		
 		//Auth sur le port actif
@@ -165,8 +165,7 @@ public class ClientChatOperation{
 					"Error : passive OIS creation failed!");
 				}
 				
-				container = new Container(new Authentification(new ModelContact(-1,login, pass),pass), 
-																login);				
+				container = new Container(new Authentification(login,pass), login);				
 				//Auth sur le port passif
 				try {
 					// On tente d'envoyer les données

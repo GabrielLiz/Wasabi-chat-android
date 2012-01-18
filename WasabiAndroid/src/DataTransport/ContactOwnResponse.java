@@ -21,7 +21,11 @@ public class ContactOwnResponse extends AdminStream {
 	 * 
 	 */
 	
-	public ContactOwnResponse(ModelContact owner){
-		super(owner);
+	public ContactOwnResponse(){
+		super();
+	}
+	
+	public ContactOwnResponse(ModelContact ownContact){
+		super(ownContact);
 	}
 }

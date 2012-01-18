@@ -169,7 +169,7 @@ public class ClientChatApp extends Activity {
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
-			printToast(e.getMessage());
+			printToast("hi");
 		}
     	
     }

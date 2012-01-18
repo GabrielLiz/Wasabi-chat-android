@@ -5,8 +5,6 @@ package DataTransport;
 
 import java.io.Serializable;
 
-import DataModel.ModelContact;
-
 /**
  * @author Yannick Lanz
  *
@@ -31,13 +29,11 @@ public class Status extends AdminStream {
 	/**
 	 * 
 	 */
-	public Status(ModelContact owner) {
-		super(owner);
+	public Status() {
 		value = Value.OK;
 	}
 	
-	public Status(ModelContact owner, Value value) {
-		super(owner);
+	public Status(Value value) {
 		this.value = value;
 	}
 

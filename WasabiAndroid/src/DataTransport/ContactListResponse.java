@@ -21,13 +21,11 @@ public class ContactListResponse extends AdminStream {
 	/**
 	 * 
 	 */
-	public ContactListResponse(ModelContact owner) {
-		super(owner);
+	public ContactListResponse() {
 		contacts = new LinkedList<ModelContact>();
 	}
 	
-	public ContactListResponse(ModelContact owner, LinkedList<ModelContact> contacts) {
-		super(owner);
+	public ContactListResponse(LinkedList<ModelContact> contacts) {
 		this.contacts = contacts;
 	}
 	

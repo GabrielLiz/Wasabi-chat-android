@@ -3,8 +3,6 @@
  */
 package DataTransport;
 
-import DataModel.ModelContact;
-
 /**
  * @author Yannick Lanz
  *
@@ -19,8 +17,8 @@ public class ContactOwnRequest extends AdminStream {
 	/**
 	 * 
 	 */
-	public ContactOwnRequest(ModelContact owner) {
-		super(owner);
+	public ContactOwnRequest() {
+		// TODO Auto-generated constructor stub
 	}
 
 }

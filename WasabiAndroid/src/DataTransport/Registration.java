@@ -3,8 +3,6 @@
  */
 package DataTransport;
 
-import DataModel.ModelContact;
-
 /**
  * @author Yannick Lanz
  *
@@ -22,7 +20,8 @@ public class Registration extends AdminStream {
 	 * 
 	 */
 	public Registration(String login, String pass) {
-		super(new ModelContact(-1, login, pass));
+		this.login = login;
+		this.pass = pass;
 	}
 
 	public String getLogin() {
