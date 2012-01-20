@@ -1,13 +1,18 @@
 package com.exemple.clientchat;
 
 
-import com.exemple.clientchat.R;
+import com.exemple.clientchat.ClientChatOperation;
 
+import DataModel.*;
+import DataTransport.*;
+
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.ArrayList;
 
 import android.app.Activity;
 import android.os.Bundle;
+import android.os.Handler;
 import android.view.KeyEvent;
 import android.view.View;
 import android.widget.AdapterView;
@@ -23,7 +28,12 @@ import android.content.DialogInterface;
 import android.view.LayoutInflater;
 import android.widget.Toast;
 
+
+
+
 public class ClientChatApp extends Activity {
+	
+
 	
 	/**
 	 * used to know the current layout and to switch between the current layout
@@ -36,6 +46,9 @@ public class ClientChatApp extends Activity {
 	ListLayout currentLayout; 
 	
 	ClientChatOperation clientOp;
+	
+	private ListView requestList;
+	
     
     /**
 	 * when destroying the activity
@@ -46,6 +59,7 @@ public class ClientChatApp extends Activity {
 		this.finish();
 	}
 	
+        
 	/** Called when the activity is first created. */
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -117,9 +131,7 @@ public class ClientChatApp extends Activity {
     	toast.show();
     }
     
-    
-    
-    
+       
     
     /**
      * authenticate user menu
@@ -148,25 +160,14 @@ public class ClientChatApp extends Activity {
 			if(clientOp.authToServer()){
 				currentLayout = ListLayout.ListContactLayout; 
 				setContentView (R.layout.list);
-				String [] nameList ={"alain", "toto", "tom", "jack"};
-				for (String name : nameList)
-					clientOp.setContact(name);
-					
-				String [] clientList = clientOp.retreiveContactList();
-				
-				final ListView list = (ListView)findViewById(R.id.clientList);
-				list.setAdapter(new ArrayAdapter<String>(this,
-						android.R.layout.simple_list_item_1, clientList));  
-				
-				list.setOnItemClickListener(new ListView.OnItemClickListener() {
-					public void onItemClick(AdapterView<?> a, View v, int pos, long l) {
-						tchatMenu(list.getItemAtPosition(pos).toString());
-					}
-				});
+				showContactList();
 			}
 			printToast(ClientChatOperation.getOpResult());
-			
-		} catch (Exception e) {
+    	}
+		catch(ClientChatException e){
+			printToast (e.getMsg());
+		}
+		catch (Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 			printToast("hi");
@@ -183,6 +184,34 @@ public class ClientChatApp extends Activity {
     	currentLayout = ListLayout.TchatLayout; 
     	TextView clientNameLbl = (TextView)findViewById(R.id.clientNameLbl);
     	clientNameLbl.setText(clientName);
+    	// begin receiving messages form a contact
+    	startReceiveMsg(clientName);
+    }
+    
+    /**
+     * this method 
+     * @param selectedContact
+     */
+    private void startReceiveMsg(final String selectedContact){
+    	try {
+			clientOp.listenAndReceiveMsg(selectedContact);
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+    	
+    	// Need handler for callbacks to the UI thread
+    	final Handler handler = new Handler();
+    	
+    	//display the message (back in the UI main thread, bacause you can't here : CalledFromWrongThreadException)
+    	handler.post(new Runnable() {
+            public void run() {
+            	TextView messageTxt = (TextView)findViewById(R.id.tchatLbl);
+            	messageTxt.append("\n");
+        		messageTxt.append(selectedContact + " : " +clientOp.getMsgReceived());
+            }
+        });
+    	
     }
     
     /**
@@ -191,14 +220,39 @@ public class ClientChatApp extends Activity {
      */
     public void sendMsg(View btn){
     	EditText edit = (EditText)findViewById(R.id.tchatText);
-    	ScrollView scroll = (ScrollView)findViewById(R.id.scrollView);
     	TextView messageTxt = (TextView)findViewById(R.id.tchatLbl);
+    	String selectedContact = ((TextView)findViewById(R.id.clientNameLbl)).toString();
     	String msg = edit.getText().toString();
-    	messageTxt.append("\n");
-    	messageTxt.append(msg);
-    	edit.setText("");
+    	
+    	try{
+    		clientOp.sendMsg(msg,selectedContact);
+    		messageTxt.append("\n");
+    		messageTxt.append(clientOp.getUserName() + " : " + msg);
+    		edit.setText("");
+    	}catch (Exception e){
+    		printToast(e.getMessage());
+    	}
+    	//display the message
+		
     }
     
+    /**
+     * this method is used to refresh the contact 
+     * list in the list Layout
+     */
+    public void showContactList(){
+    	final ListView list = (ListView)findViewById(R.id.clientList);
+    	String [] clientList = clientOp.retreiveContactList();	
+		list.setAdapter(new ArrayAdapter<String>(this,
+				android.R.layout.simple_list_item_1, clientList));  
+		
+		list.setOnItemClickListener(new ListView.OnItemClickListener() {
+			public void onItemClick(AdapterView<?> a, View v, int pos, long l) {
+				tchatMenu(list.getItemAtPosition(pos).toString());
+			}
+		});
+    	
+    }
     
     /**
      * Add a contact
@@ -218,7 +272,6 @@ public class ClientChatApp extends Activity {
     	getClientList(btn);
     }
     
-    private ListView requestList;
     /**
      * View request
      * @param btn
@@ -294,6 +347,7 @@ public class ClientChatApp extends Activity {
          });
     }
     
+    
     @Override
 	public boolean onKeyDown(int keyCode, KeyEvent event) {
 		if (keyCode == KeyEvent.KEYCODE_BACK) {
@@ -326,6 +380,7 @@ public class ClientChatApp extends Activity {
 			case TchatLayout: {
 				setContentView(R.layout.list);
 				currentLayout = ListLayout.ListContactLayout;
+				showContactList();
 				break;
 			}
 		}

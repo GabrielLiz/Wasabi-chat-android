@@ -1,3 +1,7 @@
+/**
+ * @author Med_Regaya
+ */
+
 package com.exemple.clientchat;
 
 public class ClientChatException extends Exception{
