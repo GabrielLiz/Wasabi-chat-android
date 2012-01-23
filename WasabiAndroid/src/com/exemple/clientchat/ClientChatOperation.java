@@ -3,16 +3,13 @@
  */
 package com.exemple.clientchat;
 
+import android.os.Debug;
 import android.os.Handler;
 import android.widget.TextView;
 
-import com.exemple.clientchat.ClientChatApp;
-import DataModel.ModelContact;
-import DataModel.ModelConversationSimple;
+import com.exemple.clientchat.*;
+import DataModel.*;
 import DataTransport.*;
-
-import com.exemple.clientchat.ClientChatException;
-import com.exemple.clientchat.ClientChatApp.ListLayout;
 
 import java.io.IOException;
 import java.io.ObjectInputStream;
@@ -36,10 +33,13 @@ public class ClientChatOperation{
 	
 	
 	
+	//Our user informations returned by the server during auth
+	private ModelContact owner;
+	
 	private String login;
 	private String pass;
-	private static int clientId;
-	private ContactListResponse contacts;
+	//private static int clientId;
+	private LinkedList<ModelContact> contacts;
 	private String msgRcvd = null;
 	
 	
@@ -55,7 +55,6 @@ public class ClientChatOperation{
 	public ClientChatOperation (String login, String pass){
 		this.login = login;
 		this.pass= pass;
-		contacts = new ContactListResponse();
 	}
 	
 	/**
@@ -75,7 +74,7 @@ public class ClientChatOperation{
 		
 		// On tente de se connecter au serveur
 		try {
-			s_active = new Socket(address, 3000);
+			s_active = new Socket(address, 3002);
 		} catch (IOException e) {
 			throw new ClientChatException(ClientChatException.IO_ERREUR, 
 										"Error : active socket creation failed!");
@@ -95,8 +94,7 @@ public class ClientChatOperation{
 			throw new ClientChatException(ClientChatException.IO_ERREUR, 
 										"Error : active OIS creation failed!");
 		}
-    	
-		opResult = "Connected to server!";
+    
 		return 0;
     }//connectToServer
     
@@ -107,62 +105,67 @@ public class ClientChatOperation{
     	
 		// On crée un objet container pour contenir nos donnée
 		// On y ajoute un AdminStream de type Registration avec comme params le login et le mot de pass
-    	Container container = new Container(new Registration(login, pass), login);
+    	RegistrationRequest regRequest = new RegistrationRequest(login, pass);
 		try {
 			// On tente d'envoyer les données
-			oos_active.writeObject(container);
+			oos_active.writeObject(regRequest);
 			// On tente de recevoir les données
-			Status status = (Status)ois_active.readObject();
+			RegistrationResponse regResponse = (RegistrationResponse)ois_active.readObject();
 
 			// On switch sur le type de retour que nous renvoie le serveur
 			// !!!Le type enum "Value" est sujet à modification et va grandir en fonction de l'avance du projet!!!
-			switch(status.getValue()){
-			case OK:
-				opResult = "Account registration succeed!";
-				return true;
-			case CONTACT_ALREADY_EXISTS:
+			switch(regResponse.getResponseType()){
+			case REG_ALREADY_EXISTS:
 				opResult = "Error : User already exist!";
 				return false;
-			case CONTACT_CREATION_FAILED:
-				opResult = "Error : User creation failed!";
+			case REG_LOGIN_BAD_FORMAT:
+				opResult = "Error : login bad format!";
 				return false;
-			default:
+			case REG_PASS_BAD_FORMAT:
+				opResult = "Error : password bad format!";
+				return false;
+			case REG_SUCCESS:
+				opResult = "Account registration succeed!";
+				return true;
+			case REG_UNKNOW_ERROR:
 				opResult = "Error : Unknown error!";
 				return false;
 			}
 		} catch (Exception e) {
 			throw new ClientChatException (ClientChatException.IO_ERREUR, "ERROR: Communication Error");
 		}
+		return false;
     }//registerToServer()
 	
     /**
      * Auth to server
      */
-    public boolean authToServer() throws Exception{
+    public boolean authToServer() throws ClientChatException{
 
 		// On crée un objet container pour contenir nos donnée
 		// On y ajoute un AdminStream de type Authentification avec comme params le login et le mot de pass
-    	Container container = new Container(new Authentification(login, pass), 
-    											login);
+    	AuthentificationRequest request = new AuthentificationRequest(login, pass);
 		
 		//Auth sur le port actif
 		try {
 			// On tente d'envoyer les données
-			oos_active.writeObject(container);
+			oos_active.writeObject(request);
 			// On tente de recevoir les données
-			Status status = (Status)ois_active.readObject();
+			AuthentificationResponse response = (AuthentificationResponse)ois_active.readObject();
 
 			// On switch sur le type de retour que nous renvoie le serveur
 			// !!!Le type enum "Value" est sujet à modification et va grandir en fonction de l'avance du projet!!!
-			switch(status.getValue()){
-			case CONTACT_AUTHENTIFICATION_SUCCESS:
-
+			switch(response.getResponseType()){
+			case AUTH_SUCCESS:
+				
+				owner = response.getOwner();
+				
 				//creation du socket
 				try {
-					s_passive = new Socket(address, 3001);
+					s_passive = new Socket(address, 3003);
 				} catch (IOException e) {
 					throw new ClientChatException(ClientChatException.IO_ERREUR, 
-					"Error : passive socket creation failed!");
+					"ERROR : passive socket creation failed!");
 					
 				}
 				
@@ -171,59 +174,48 @@ public class ClientChatOperation{
 					oos_passive = new ObjectOutputStream(s_passive.getOutputStream());
 				} catch (IOException e) {
 					throw new ClientChatException(ClientChatException.IO_ERREUR, 
-					"Error : passive OOS creation failed!");
+					"ERROR : passive OOS creation failed!");
 				}
 				// On crée le flux entrant
 				try {
 					ois_passive = new ObjectInputStream(s_passive.getInputStream());
 				} catch (Exception e) {
 					throw new ClientChatException(ClientChatException.IO_ERREUR, 
-					"Error : passive OIS creation failed!");
+					"ERROR : passive OIS creation failed!");
 				}
 				
-				container = new Container(new Authentification(login,pass), login);				
+				request = new AuthentificationRequest(owner);			
 				//Auth sur le port passif
 				try {
 					// On tente d'envoyer les données
-					oos_passive.writeObject(container);
+					oos_passive.writeObject(request);
 					// On tente de recevoir les données
-					status = (Status)ois_passive.readObject();
+					response = (AuthentificationResponse)ois_passive.readObject();
 
 					// On switch sur le type de retour que nous renvoie le serveur
 					// !!!Le type enum "Value" est sujet à modification et va grandir en fonction de l'avance du projet!!!
-					switch(status.getValue()){
-					case CONTACT_AUTHENTIFICATION_SUCCESS:
-						//ClientChatApp.startReceptionThread();
-						break;
-					case CONTACT_AUTHENTIFICATION_FAILED:
-						opResult = "Error : login failed on passive socket!";
-						return false;
-					default:
-						opResult = "Error : unknown error!"; 
+					switch(response.getResponseType()){
+					case AUTH_SUCCESS:
+						opResult = "Welcome!";
+						return true;
+					case AUTH_FAIL:
+						opResult = "ERROR : check login/pwd! (passive socket)";
 						return false;
 					}
 				} catch(Exception e){
-					e.printStackTrace();
-					throw e;
+					throw new ClientChatException (ClientChatException.IO_ERREUR, "ERROR: Communication Error (passive)");
 				}
-			break;
 			
-			case CONTACT_AUTHENTIFICATION_FAILED:
-				opResult = "Error : login failed on active socket!";
+			case AUTH_FAIL:
+				opResult = "ERROR : check login/pwd! (active socket)";
 				return false;
-				
-			default:
-				opResult = "Error : unknown error!";
-				return false;
+
 			}
 		} catch (Exception e) {
-			throw e;
+			throw new ClientChatException (ClientChatException.IO_ERREUR, "ERROR: Communication Error (active)");
 		}
-		
-		opResult = "Login succeed!";
-		
 		return true;
-    }
+    }//authToServer()
     
     /**
      * return the command result
@@ -233,94 +225,101 @@ public class ClientChatOperation{
     	return opResult;
     }
     
-    /**
-     * add a contact to client by using his login 
-     * @param login
-     */
-    public void setContact(String login){
-    	clientId++;
-    	contacts.addContact(new ModelContact(clientId,login));
-    }
+//    /**
+//     * add a contact to client by using his login 
+//     * @param login
+//     */
+//    public void setContact(String login){
+//    	clientId++;
+//    	contacts.addContact(new ModelContact(clientId,login));
+//    }
     
     
     /**
      * return the contacts names of owner client 
      * @return
+     * @throws ClientChatException 
      */
-    public String [] retreiveContactList(){
+    public void retreiveContactList() throws ClientChatException{
     	
-  
-    	Container containerReq = new Container (new ContactListRequest(),login);
+    	ContactListRequest cListRequest = new ContactListRequest(owner);
+    	ContactListResponse cListResponse;
     	try{
-    		oos_active.writeObject(containerReq);
-    	}catch (IOException e){
-    		e.printStackTrace();
-    	}
-    	Container containerResp = new Container(new ContactListResponse(), login);
-    	try{
-    		containerResp = (Container)ois_active.readObject();
+    		oos_active.writeObject(cListRequest);
+    		cListResponse = (ContactListResponse)ois_active.readObject();
     	}catch (Exception e){
-    		e.printStackTrace();
+    		throw new ClientChatException (ClientChatException.IO_ERREUR, "ERROR: Communication Error");
     	}
-    	Stream stream = containerResp.getStream();
     	
-    	Object[] objs= ((ContactListResponse)containerResp.getStream()).getContactList();
-    	//ModelContact [] modelContacts; = (ModelContact[])objs;
-    	String [] contactsName = new String[objs.length];
-    	for (int i=0; i<objs.length;i++){
-    		
-    		contactsName[i]= ((ModelContact)(objs[i])).getLogin();
-    	}
-    	return contactsName;
+    	contacts = cListResponse.getContactList(); 
+    	contacts.remove(owner); //Avoid to display current user in the list
+    	
+    	//String [] contactsName = new String[cListResponse.getContactList().size()];
+    	//int i = 0;
+    	
+    	//Store locally the contact list
+//    	for(ModelContact contact:  cListResponse.getContactList()){
+//    		contactsName[i]= contact.getLogin();
+//    		i++;
+//    	}
     }
     
-    public void listenAndReceiveMsg(final String selectedContact) throws Exception{
-		new Thread(new Runnable(){
-			public void run(){
-				Container container;
-				while(true){
-					try {
-						container = (Container)ClientChatOperation.ois_passive.readObject();
-					} catch (IOException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-						return;
-					} catch (ClassNotFoundException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-						return;
-					}
-					Class<? extends Stream> streamClass = container.getStream().getClass();
-					if(streamClass == Conversation.class){
-							if(container.getLogin() != null && container.getLogin().compareTo(selectedContact) == 0){
-
-						    	//Recover the message received
-						    	msgRcvd = ((Conversation)container.getStream()).getConv().getMsg();					    		
-						}
-					}
-				}
-			}
-		}).start();
-    }
+//    public void listenAndReceiveMsg(final String selectedContact, final Hander handler) throws Exception{
+//		new Thread(new Runnable(){
+//			public void run(){
+//				Container container;
+//				while(true){
+//					try {
+//						container = (Container)ClientChatOperation.ois_passive.readObject();
+//					} catch (IOException e) {
+//						// TODO Auto-generated catch block
+//						e.printStackTrace();
+//						return;
+//					} catch (ClassNotFoundException e) {
+//						// TODO Auto-generated catch block
+//						e.printStackTrace();
+//						return;
+//					}
+//					Class<? extends Stream> streamClass = container.getStream().getClass();
+//					if(streamClass == Conversation.class){
+//							if(container.getLogin() != null && container.getLogin().compareTo(selectedContact) == 0){
+//
+//						    	//Recover the message received
+//						    	msgRcvd = ((Conversation)container.getStream()).getConv().getMsg();	
+//  
+//								//display the message (back in the UI main thread, because you can't here : CalledFromWrongThreadException)
+//								handler.post(new Runnable() {
+//							        public void run() {
+//							        	TextView messageTxt = (TextView)findViewById(R.id.tchatLbl);
+//							        	messageTxt.append("\n");
+//							    		messageTxt.append(selectedContact + " : " +clientOp.getMsgReceived());
+//							        }
+//							    });
+//						}
+//					}
+//				}
+//			}
+//		}).start();
+//    }
     
-    /**
-     * 
-     */
-    public void sendMsg(String msg, String selectedContact) throws Exception{
-    	
-    	ModelConversationSimple conv = new ModelConversationSimple();
-    	conv.setContactLogin(selectedContact);
-    	conv.setMsg(msg);
-    	Conversation conv_send = new Conversation(conv);
-    	Container container = new Container(conv_send, login);
-    	try {
-    		//send message on active socket
-    		ClientChatOperation.oos_active.writeObject(container);
-    	} catch (Exception e) {
-    		e.printStackTrace();
-    	}
-    	
-    }
+//    /**
+//     * 
+//     */
+//    public void sendMsg(String msg, String selectedContact) throws Exception{
+//    	
+//    	ModelConversationSimple conv = new ModelConversationSimple();
+//    	conv.setContactLogin(selectedContact);
+//    	conv.setMsg(msg);
+//    	Conversation conv_send = new Conversation(conv);
+//    	Container container = new Container(conv_send, login);
+//    	try {
+//    		//send message on active socket
+//    		ClientChatOperation.oos_active.writeObject(container);
+//    	} catch (Exception e) {
+//    		e.printStackTrace();
+//    	}
+//    	
+//    }
     
     public String getUserName(){
     	return this.login;
@@ -329,6 +328,29 @@ public class ClientChatOperation{
     public String getMsgReceived(){ 
     	return msgRcvd == null?"":msgRcvd;
     	
+    }
+    
+    public LinkedList<ModelContact> getContacts() {
+		return contacts;
+	}
+
+
+	public void OnDestroy(){
+    	
+    	try {
+			ois_passive.close();
+	    	oos_passive.close();
+	    	s_passive.close();
+	    	
+	    	ois_active.close();
+	    	oos_active.close();
+	    	s_active.close();
+	    	
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+
     }
 
 }

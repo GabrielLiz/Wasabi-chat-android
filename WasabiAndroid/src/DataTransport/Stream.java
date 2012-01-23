@@ -18,21 +18,17 @@ abstract public class Stream implements Serializable{
 	 */
 	private static final long serialVersionUID = 1982056651442244303L;
 	
-	private ModelContact ownContact;
+	private ModelContact owner;
 	
-	public Stream(){
-		this.ownContact = null;
-	}
-	
-	public Stream(ModelContact ownContact){
-		this.ownContact = ownContact;
+	public Stream(ModelContact owner){
+		this.owner = owner;
 	}
 
-	public ModelContact getOwnContact() {
-		return ownContact;
+	public ModelContact getOwner() {
+		return owner;
 	}
 
-	public void setOwnContact(ModelContact ownContact) {
-		this.ownContact = ownContact;
+	public void setOwner(ModelContact owner) {
+		this.owner = owner;
 	}
 }

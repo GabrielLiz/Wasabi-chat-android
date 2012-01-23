@@ -3,6 +3,7 @@
  */
 package DataTransport;
 
+import DataModel.ModelContact;
 import DataModel.ModelConversation;
 
 /**
@@ -11,26 +12,26 @@ import DataModel.ModelConversation;
  */
 public class Conversation extends AdminStream {
 
-	private ModelConversation conv;
 	/**
 	 * 
 	 */
 	private static final long serialVersionUID = 4479215220670353994L;
+	private ModelConversation conversation;
 
 	/**
 	 * 
 	 */
-	public Conversation() { }
 	
-	public Conversation(ModelConversation conv){
-		this.conv = conv;
+	public Conversation(ModelContact owner, ModelConversation conversation){
+		super(owner);
+		this.conversation = conversation;
 	}
 
-	public ModelConversation getConv() {
-		return conv;
+	public ModelConversation getConversation() {
+		return conversation;
 	}
 
-	public void setConv(ModelConversation conv) {
-		this.conv = conv;
+	public void setConversation(ModelConversation conversation) {
+		this.conversation = conversation;
 	}
 }
