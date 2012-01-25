@@ -12,10 +12,12 @@ public final class R {
     }
     public static final class drawable {
         public static final int icon=0x7f020000;
-        public static final int photo=0x7f020001;
-        public static final int wasabi=0x7f020002;
-        public static final int wasabi_icon=0x7f020003;
-        public static final int wasabi_old=0x7f020004;
+        public static final int icone=0x7f020001;
+        public static final int img_layout=0x7f020002;
+        public static final int photo=0x7f020003;
+        public static final int wasabi=0x7f020004;
+        public static final int wasabi_icon=0x7f020005;
+        public static final int wasabi_old=0x7f020006;
     }
     public static final class id {
         public static final int AddContact=0x7f05000b;

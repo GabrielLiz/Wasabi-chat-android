@@ -31,12 +31,7 @@ import android.content.DialogInterface;
 import android.view.LayoutInflater;
 import android.widget.Toast;
 
-
-
-
 public class ClientChatApp extends Activity {
-	
-
 	
 	/**
 	 * used to know the current layout and to switch between the current layout
@@ -61,8 +56,8 @@ public class ClientChatApp extends Activity {
 	 */
 	@Override
 	public void onDestroy() {
-		clientOp.OnDestroy();
 		super.onDestroy();
+		clientOp.OnDestroy();
 		this.finish();
 	}
 	
@@ -191,6 +186,7 @@ public class ClientChatApp extends Activity {
     	clientNameLbl.setText(clientName);
     	//TODO: begin receiving messages form a contact
     	//clientOp.listenAndReceiveMsg(clientName, handler);
+    	
     }
   
     
@@ -363,7 +359,7 @@ public class ClientChatApp extends Activity {
 
 		switch (currentLayout) {
 			case MainLayout: {
-				onDestroy();
+				showAlert("Do you want to quit Wasabi?", currentLayout);
 				break;
 			}
 			case ConnectUserLayout:
