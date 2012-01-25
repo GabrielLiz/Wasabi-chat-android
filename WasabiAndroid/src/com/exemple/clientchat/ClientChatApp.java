@@ -60,7 +60,6 @@ public class ClientChatApp extends Activity {
 	 */
 	@Override
 	public void onDestroy() {
-		clientOp.OnDestroy();
 		super.onDestroy();
 		this.finish();
 	}
@@ -115,6 +114,7 @@ public class ClientChatApp extends Activity {
     	//Si tout est en ordre essaie de s'enregistrer sur le serveur
     	else{
     		clientOp = new ClientChatOperation(login,pass);
+    		
     		try {
 				if(clientOp.registerToServer()){
 					setContentView(R.layout.main);
@@ -188,6 +188,7 @@ public class ClientChatApp extends Activity {
     	currentLayout = ListLayout.TchatLayout; 
     	TextView clientNameLbl = (TextView)findViewById(R.id.clientNameLbl);
     	clientNameLbl.setText(clientName);
+    	
     	// begin receiving messages form a contact
     	startReceiveMsg(clientName);
     }
@@ -218,7 +219,7 @@ public class ClientChatApp extends Activity {
     	
     	try{
     		clientOp.sendMsg(msg,selectedContact);
-    		messageTxt.append("\n");
+    		messageTxt.append("\n\n");
     		messageTxt.append(clientOp.getUserName() + " : " + msg);
     		edit.setText("");
     	}catch (Exception e){
@@ -357,7 +358,7 @@ public class ClientChatApp extends Activity {
 
 		switch (currentLayout) {
 			case MainLayout: {
-				onDestroy();
+				showAlert("Do you want to qui Wasabi?");
 				break;
 			}
 			case ConnectUserLayout:
@@ -367,7 +368,8 @@ public class ClientChatApp extends Activity {
 				break;
 			}
 			case ListContactLayout: {
-				showAlert("Disconnect user?", currentLayout);
+				showAlert("Disconnect user?");
+				clientOp.OnDestroy();
 				break;
 			}
 			case TchatLayout: {
@@ -383,28 +385,18 @@ public class ClientChatApp extends Activity {
 	 * to show message alert 
 	 * @param msg
 	 */
-	public void showAlert(String msg, final ListLayout layout) {
+	public void showAlert(String msg) {
 		new AlertDialog.Builder(this).setTitle("Attention!").setMessage(msg)
 				.setPositiveButton("OK", new DialogInterface.OnClickListener() {
 					//@Override
 					public void onClick(DialogInterface dialog, int which) {
-						switch (layout) {
+						switch (currentLayout) {
 						case MainLayout: {
 							onDestroy();
 							break;
 						}
 						
 						case ListContactLayout: {
-							clientOp.OnDestroy();
-							try{
-								ClientChatOperation.connectToServer();
-							}
-							catch(ClientChatException e){
-								printToast(e.getMsg());
-							}
-							catch(Exception e){
-								printToast(e.getMessage());
-							}
 							setContentView(R.layout.main);
 							currentLayout = ListLayout.MainLayout;
 							break;

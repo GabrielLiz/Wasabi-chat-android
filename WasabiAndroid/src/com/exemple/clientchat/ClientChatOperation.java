@@ -66,7 +66,8 @@ public class ClientChatOperation{
     	
 		// On commence par chercher l'adresse du serveur
 		try {
-			address = InetAddress.getByName("www.mubedded.com");
+			//address = InetAddress.getByName("www.mubedded.com");
+			address = InetAddress.getByName("10.192.83.108");
 		} catch (UnknownHostException e) {
 			throw new ClientChatException(ClientChatException.HOST_INCONNU, 
 										"ERROR: Server unreachable");
@@ -216,6 +217,7 @@ public class ClientChatOperation{
 				return false;
 			}
 		} catch (Exception e) {
+			e.printStackTrace();
 			throw new ClientChatException(ClientChatException.IO_ERREUR, 
 					"Error : communication error");
 		}
@@ -300,7 +302,7 @@ public class ClientChatOperation{
 						    	//display the message (back in the UI main thread, bacause you can't here : CalledFromWrongThreadException)
 						    	handler.post(new Runnable() {
 						            public void run() {
-						            	messageTxt.append("\n");
+						            	messageTxt.append("\n\n");
 						        		messageTxt.append(selectedContact + " : " +msgRcvd);
 						            }
 						        });
@@ -343,21 +345,21 @@ public class ClientChatOperation{
 
   public void OnDestroy(){
 
-//		try {
-//
-//			ois_passive.close();
-//			oos_passive.close();
-//			s_passive.close();
-//
-//			ois_active.close();
-//			oos_active.close();
-//			s_active.close();
-//
-//		} catch (IOException e) {
-//			// TODO Auto-generated catch block
-//
-//			e.printStackTrace();
-//		}
+	try {
+
+			ois_passive.close();
+			oos_passive.close();
+			s_passive.close();
+
+			ois_active.close();
+			oos_active.close();
+			s_active.close();
+
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			
+			e.printStackTrace();
+		}
 
 	}
 
