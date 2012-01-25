@@ -27,6 +27,7 @@ import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.view.LayoutInflater;
 import android.widget.Toast;
+import java.util.LinkedList;
 
 
 
@@ -49,12 +50,17 @@ public class ClientChatApp extends Activity {
 	
 	private ListView requestList;
 	
+	
+	// Need handler for callbacks to the UI thread
+	final Handler handler = new Handler();
+	
     
     /**
 	 * when destroying the activity
 	 */
 	@Override
 	public void onDestroy() {
+		clientOp.OnDestroy();
 		super.onDestroy();
 		this.finish();
 	}
@@ -68,7 +74,6 @@ public class ClientChatApp extends Activity {
         currentLayout = ListLayout.MainLayout;
         try {
 			ClientChatOperation.connectToServer();
-			printToast (ClientChatOperation.getOpResult());
 		}
         catch (ClientChatException e){
         	printToast(e.getMsg());
@@ -91,10 +96,13 @@ public class ClientChatApp extends Activity {
     	EditText editLogin   = (EditText)findViewById(R.id.loginText);
     	EditText editPass    = (EditText)findViewById(R.id.passText);
     	EditText editConfirm = (EditText)findViewById(R.id.passConfText);
-        	
+    	
     	String login   = editLogin.getText().toString();
+    	login = login.trim();
     	String pass    = editPass.getText().toString();
+    	pass = pass.trim();
     	String confirm = editConfirm.getText().toString();
+    	confirm = confirm.trim();
     	
     	//Si les champs sont pas tous remplis = erreur
     	if(login.compareTo("")==0 || pass.compareTo("")==0 || confirm.compareTo("")==0){
@@ -110,14 +118,15 @@ public class ClientChatApp extends Activity {
     		try {
 				if(clientOp.registerToServer()){
 					setContentView(R.layout.main);
-					printToast(ClientChatOperation.getOpResult());
 				}
+				printToast(ClientChatOperation.getOpResult());
 			}catch (ClientChatException e){
 				printToast(e.getMsg());
 			}
     		catch (Exception e) {
 				// TODO Auto-generated catch block
-				e.printStackTrace();				
+				e.printStackTrace();
+				printToast(ClientChatOperation.getOpResult());
 			}	
     	}
     }
@@ -167,11 +176,6 @@ public class ClientChatApp extends Activity {
 		catch(ClientChatException e){
 			printToast (e.getMsg());
 		}
-		catch (Exception e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-			printToast("hi");
-		}
     	
     }
     
@@ -194,23 +198,11 @@ public class ClientChatApp extends Activity {
      */
     private void startReceiveMsg(final String selectedContact){
     	try {
-			clientOp.listenAndReceiveMsg(selectedContact);
+			clientOp.listenAndReceiveMsg(selectedContact, handler, (TextView)findViewById(R.id.tchatLbl));
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-    	
-    	// Need handler for callbacks to the UI thread
-    	final Handler handler = new Handler();
-    	
-    	//display the message (back in the UI main thread, bacause you can't here : CalledFromWrongThreadException)
-    	handler.post(new Runnable() {
-            public void run() {
-            	TextView messageTxt = (TextView)findViewById(R.id.tchatLbl);
-            	messageTxt.append("\n");
-        		messageTxt.append(selectedContact + " : " +clientOp.getMsgReceived());
-            }
-        });
     	
     }
     
@@ -221,7 +213,7 @@ public class ClientChatApp extends Activity {
     public void sendMsg(View btn){
     	EditText edit = (EditText)findViewById(R.id.tchatText);
     	TextView messageTxt = (TextView)findViewById(R.id.tchatLbl);
-    	String selectedContact = ((TextView)findViewById(R.id.clientNameLbl)).toString();
+    	String selectedContact = ((TextView)findViewById(R.id.clientNameLbl)).getText().toString();
     	String msg = edit.getText().toString();
     	
     	try{
@@ -259,8 +251,8 @@ public class ClientChatApp extends Activity {
      * @param btn
      */
     public void ViewAddContact(View btn){
-    	setContentView(R.layout.addcontact);
-
+    	//setContentView(R.layout.addcontact);
+    	printToast("Useless you already see all the users on the server! ;-)");
     }
     
     /**
@@ -277,74 +269,75 @@ public class ClientChatApp extends Activity {
      * @param btn
      */
     public void ViewRequest(View btn){
-    	//TODO Conecter au serveur pour voir les demande d'ajout
-    	setContentView(R.layout.request);
-    	 
-        //Récupération de la listview créée dans le fichier request.xml
-    	requestList = (ListView) findViewById(R.id.RequestList);
- 
-        //Création de la ArrayList qui nous permettra de remplire la listView
-        ArrayList<HashMap<String, String>> listItem = new ArrayList<HashMap<String, String>>();
- 
-        //On déclare la HashMap qui contiendra les informations pour un item
-        HashMap<String, String> map;
- 
-        //Création d'une HashMap pour insérer les informations du premier item de notre listView
-        map = new HashMap<String, String>();
-        //on insère un élément titre que l'on récupérera dans le textView titre créé dans le fichier affichageitem.xml
-        map.put("titre", "Jim");
-        //on insère un élément description que l'on récupérera dans le textView description créé dans le fichier affichageitem.xml
-        map.put("description", "Saluta ajoute moi stp...");
-        //on insère la référence à l'image (convertit en String car normalement c'est un int) que l'on récupérera dans l'imageView créé dans le fichier affichageitem.xml
-        map.put("img", String.valueOf(R.drawable.photo));
-        //enfin on ajoute cette hashMap dans la arrayList
-        listItem.add(map);
- 
-        //On refait la manip plusieurs fois avec des données différentes pour former les items de notre ListView
- 
-        map = new HashMap<String, String>();
-        map.put("titre", "Murphy");
-        map.put("description", "Add me plz");
-        map.put("img", String.valueOf(R.drawable.photo));
-        listItem.add(map);
- 
-        map = new HashMap<String, String>();
-        map.put("titre", "Lara");
-        map.put("description", "Hello tu m'ajoute?");
-        map.put("img", String.valueOf(R.drawable.photo));
-        listItem.add(map);
- 
-        map = new HashMap<String, String>();
-        map.put("titre", "Jerry");
-        map.put("description", "ajoute moi!");
-        map.put("img", String.valueOf(R.drawable.photo));
-        listItem.add(map);
- 
-        //Création d'un SimpleAdapter qui se chargera de mettre les items présent dans notre list (listItem) dans la vue request
-        SimpleAdapter mSchedule = new SimpleAdapter (this.getBaseContext(), listItem, R.layout.requestview,
-               new String[] {"img", "titre", "description"}, new int[] {R.id.img, R.id.titre, R.id.description});
- 
-        //On attribut à notre listView l'adapter que l'on vient de créer
-        requestList.setAdapter(mSchedule);
- 
-        //Enfin on met un écouteur d'évènement sur notre listView
-        requestList.setOnItemClickListener(new OnItemClickListener() {
-			@SuppressWarnings("unchecked")
-         	public void onItemClick(AdapterView<?> a, View v, int position, long id) {
-				//on récupère la HashMap contenant les infos de notre item (titre, description, img)
-        		HashMap<String, String> map = (HashMap<String, String>) requestList.getItemAtPosition(position);
-        		//on créer une boite de dialogue
-        		AlertDialog.Builder adb = new AlertDialog.Builder(ClientChatApp.this);
-        		//on attribut un titre à notre boite de dialogue
-        		adb.setTitle("Sélection Item");
-        		//on insère un message à notre boite de dialogue, et ici on affiche le titre de l'item cliqué
-        		adb.setMessage("Votre choix : "+map.get("titre"));
-        		//on indique que l'on veut le bouton ok à notre boite de dialogue
-        		adb.setPositiveButton("Ok", null);
-        		//on affiche la boite de dialogue
-        		adb.show();
-        	}
-         });
+//    	//TODO Conecter au serveur pour voir les demande d'ajout
+//    	setContentView(R.layout.request);
+//    	 
+//        //Récupération de la listview créée dans le fichier request.xml
+//    	requestList = (ListView) findViewById(R.id.RequestList);
+// 
+//        //Création de la ArrayList qui nous permettra de remplire la listView
+//        ArrayList<HashMap<String, String>> listItem = new ArrayList<HashMap<String, String>>();
+// 
+//        //On déclare la HashMap qui contiendra les informations pour un item
+//        HashMap<String, String> map;
+// 
+//        //Création d'une HashMap pour insérer les informations du premier item de notre listView
+//        map = new HashMap<String, String>();
+//        //on insère un élément titre que l'on récupérera dans le textView titre créé dans le fichier affichageitem.xml
+//        map.put("titre", "Jim");
+//        //on insère un élément description que l'on récupérera dans le textView description créé dans le fichier affichageitem.xml
+//        map.put("description", "Saluta ajoute moi stp...");
+//        //on insère la référence à l'image (convertit en String car normalement c'est un int) que l'on récupérera dans l'imageView créé dans le fichier affichageitem.xml
+//        map.put("img", String.valueOf(R.drawable.photo));
+//        //enfin on ajoute cette hashMap dans la arrayList
+//        listItem.add(map);
+// 
+//        //On refait la manip plusieurs fois avec des données différentes pour former les items de notre ListView
+// 
+//        map = new HashMap<String, String>();
+//        map.put("titre", "Murphy");
+//        map.put("description", "Add me plz");
+//        map.put("img", String.valueOf(R.drawable.photo));
+//        listItem.add(map);
+// 
+//        map = new HashMap<String, String>();
+//        map.put("titre", "Lara");
+//        map.put("description", "Hello tu m'ajoute?");
+//        map.put("img", String.valueOf(R.drawable.photo));
+//        listItem.add(map);
+// 
+//        map = new HashMap<String, String>();
+//        map.put("titre", "Jerry");
+//        map.put("description", "ajoute moi!");
+//        map.put("img", String.valueOf(R.drawable.photo));
+//        listItem.add(map);
+// 
+//        //Création d'un SimpleAdapter qui se chargera de mettre les items présent dans notre list (listItem) dans la vue request
+//        SimpleAdapter mSchedule = new SimpleAdapter (this.getBaseContext(), listItem, R.layout.requestview,
+//               new String[] {"img", "titre", "description"}, new int[] {R.id.img, R.id.titre, R.id.description});
+// 
+//        //On attribut à notre listView l'adapter que l'on vient de créer
+//        requestList.setAdapter(mSchedule);
+// 
+//        //Enfin on met un écouteur d'évènement sur notre listView
+//        requestList.setOnItemClickListener(new OnItemClickListener() {
+//			@SuppressWarnings("unchecked")
+//         	public void onItemClick(AdapterView<?> a, View v, int position, long id) {
+//				//on récupère la HashMap contenant les infos de notre item (titre, description, img)
+//        		HashMap<String, String> map = (HashMap<String, String>) requestList.getItemAtPosition(position);
+//        		//on créer une boite de dialogue
+//        		AlertDialog.Builder adb = new AlertDialog.Builder(ClientChatApp.this);
+//        		//on attribut un titre à notre boite de dialogue
+//        		adb.setTitle("Sélection Item");
+//        		//on insère un message à notre boite de dialogue, et ici on affiche le titre de l'item cliqué
+//        		adb.setMessage("Votre choix : "+map.get("titre"));
+//        		//on indique que l'on veut le bouton ok à notre boite de dialogue
+//        		adb.setPositiveButton("Ok", null);
+//        		//on affiche la boite de dialogue
+//        		adb.show();
+//        	}
+//         });
+    	printToast("Useless you already see all the users on the server! ;-)");
     }
     
     
@@ -364,7 +357,7 @@ public class ClientChatApp extends Activity {
 
 		switch (currentLayout) {
 			case MainLayout: {
-				showAlert("Quit Wasabi, Are you sure?", currentLayout);
+				onDestroy();
 				break;
 			}
 			case ConnectUserLayout:
@@ -402,6 +395,16 @@ public class ClientChatApp extends Activity {
 						}
 						
 						case ListContactLayout: {
+							clientOp.OnDestroy();
+							try{
+								ClientChatOperation.connectToServer();
+							}
+							catch(ClientChatException e){
+								printToast(e.getMsg());
+							}
+							catch(Exception e){
+								printToast(e.getMessage());
+							}
 							setContentView(R.layout.main);
 							currentLayout = ListLayout.MainLayout;
 							break;

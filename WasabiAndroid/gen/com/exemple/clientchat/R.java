@@ -14,6 +14,7 @@ public final class R {
         public static final int icon=0x7f020000;
         public static final int photo=0x7f020001;
         public static final int wasabi=0x7f020002;
+        public static final int wasabi_icon=0x7f020003;
     }
     public static final class id {
         public static final int AddContact=0x7f05000b;

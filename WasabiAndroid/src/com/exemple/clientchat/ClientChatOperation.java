@@ -6,9 +6,8 @@ package com.exemple.clientchat;
 import android.os.Handler;
 import android.widget.TextView;
 
-import com.exemple.clientchat.ClientChatApp;
-import DataModel.ModelContact;
-import DataModel.ModelConversationSimple;
+import com.exemple.clientchat.*;
+import DataModel.*;
 import DataTransport.*;
 
 import com.exemple.clientchat.ClientChatException;
@@ -138,7 +137,7 @@ public class ClientChatOperation{
     /**
      * Auth to server
      */
-    public boolean authToServer() throws Exception{
+    public boolean authToServer() throws ClientChatException{
 
 		// On crée un objet container pour contenir nos donnée
 		// On y ajoute un AdminStream de type Authentification avec comme params le login et le mot de pass
@@ -217,7 +216,8 @@ public class ClientChatOperation{
 				return false;
 			}
 		} catch (Exception e) {
-			throw e;
+			throw new ClientChatException(ClientChatException.IO_ERREUR, 
+					"Error : communication error");
 		}
 		
 		opResult = "Login succeed!";
@@ -274,7 +274,7 @@ public class ClientChatOperation{
     	return contactsName;
     }
     
-    public void listenAndReceiveMsg(final String selectedContact) throws Exception{
+    public void listenAndReceiveMsg(final String selectedContact, final Handler handler, final TextView messageTxt) throws Exception{
 		new Thread(new Runnable(){
 			public void run(){
 				Container container;
@@ -295,7 +295,15 @@ public class ClientChatOperation{
 							if(container.getLogin() != null && container.getLogin().compareTo(selectedContact) == 0){
 
 						    	//Recover the message received
-						    	msgRcvd = ((Conversation)container.getStream()).getConv().getMsg();					    		
+						    	msgRcvd = ((Conversation)container.getStream()).getConv().getMsg();		
+						    	
+						    	//display the message (back in the UI main thread, bacause you can't here : CalledFromWrongThreadException)
+						    	handler.post(new Runnable() {
+						            public void run() {
+						            	messageTxt.append("\n");
+						        		messageTxt.append(selectedContact + " : " +msgRcvd);
+						            }
+						        });
 						}
 					}
 				}
@@ -310,6 +318,7 @@ public class ClientChatOperation{
     	
     	ModelConversationSimple conv = new ModelConversationSimple();
     	conv.setContactLogin(selectedContact);
+    	conv.setOwnLogin(login);
     	conv.setMsg(msg);
     	Conversation conv_send = new Conversation(conv);
     	Container container = new Container(conv_send, login);
@@ -330,5 +339,26 @@ public class ClientChatOperation{
     	return msgRcvd == null?"":msgRcvd;
     	
     }
+    
+
+  public void OnDestroy(){
+
+//		try {
+//
+//			ois_passive.close();
+//			oos_passive.close();
+//			s_passive.close();
+//
+//			ois_active.close();
+//			oos_active.close();
+//			s_active.close();
+//
+//		} catch (IOException e) {
+//			// TODO Auto-generated catch block
+//
+//			e.printStackTrace();
+//		}
+
+	}
 
 }
